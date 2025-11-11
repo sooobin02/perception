@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Audio Rating Task</title>
+  <title>VUI Interaction Experiment</title>
   <link rel="stylesheet" href="https://unpkg.com/jspsych@8.0.0/css/jspsych.css">
   <script src="https://unpkg.com/jspsych@8.0.0"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.0.0"></script>
   <script src="https://unpkg.com/@jspsych/plugin-preload@2.0.0"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-audio-slider-response@2.0.0"></script>
   <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@2.0.0"></script>
   <style>
     body {
@@ -20,6 +19,165 @@
       max-width: 800px;
       margin: 0 auto;
     }
+    .recording-container {
+      text-align: center;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .vui-image {
+      width: 200px;
+      height: 200px;
+      margin: 20px auto;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+    }
+    .guideline-box {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 500px;
+      text-align: left;
+      border-radius: 5px;
+    }
+    .guideline-box h4 {
+      margin-top: 0;
+      color: #667eea;
+    }
+    .recording-status {
+      font-size: 20px;
+      margin: 20px 0;
+      min-height: 30px;
+    }
+    .recording-active {
+      color: #dc3545;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.3; }
+    }
+    .timer {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+    .control-buttons {
+      margin-top: 30px;
+    }
+    .control-buttons button {
+      font-size: 18px;
+      padding: 15px 40px;
+      margin: 0 10px;
+      cursor: pointer;
+    }
+    .record-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .record-btn:hover:not(:disabled) {
+      background-color: #c82333;
+    }
+    .stop-btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .stop-btn:hover:not(:disabled) {
+      background-color: #218838;
+    }
+    .next-btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .next-btn:hover:not(:disabled) {
+      background-color: #0069d9;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .rating-prompt {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 5px;
+    }
+    .rating-prompt h4 {
+      margin-top: 0;
+      color: #333;
+    }
+    .multiple-choice-section {
+      margin: 30px 0;
+      padding: 20px;
+      background: #f0f8ff;
+      border-radius: 5px;
+      border: 2px solid #667eea;
+    }
+    .multiple-choice-section h4 {
+      margin-top: 0;
+      color: #667eea;
+    }
+    .choice-option {
+      margin: 10px 0;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .choice-option:hover {
+      background: #e6f2ff;
+    }
+    .choice-option input[type="radio"] {
+      margin-right: 10px;
+    }
+    .record-choice {
+      padding: 15px;
+      background: white;
+      border-radius: 4px;
+      border: 2px dashed #667eea;
+      margin-top: 15px;
+    }
+    .record-choice-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .mini-record-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .mini-stop-btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .mini-record-btn:disabled, .mini-stop-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -27,39 +185,35 @@
   
   <script>
     /******************************************************
-     * Audio Rating Task (slider) + Google Sheets upload
+     * VUI Interaction Experiment
      ******************************************************/
 
     console.log('Script starting...');
 
     /* ===== CONFIG ===== */
-    const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxk_TIid_Ez2D2I7E3YIw9PiPKMyCdQ_TaiEsU9ICYp_SKii4pheVAX7vqubY_G3cq8qg/exec';
-
-    /* ===== UI TEXTS ===== */
-    const TEXTS = {
-      welcomeTitle: 'Audio Rating Task',
-      welcomeBody: 'You will hear short sounds and rate them on a scale.',
-      startBtn: 'Start',
-      prompt: 'How strongly did this sound match the "sarcastic" category?',
-      leftLabel: 'Not at all',
-      rightLabel: 'Very strongly',
-      endTitle: 'Thanks!',
-      endBody: 'Your data have been prepared. If upload fails, use the CSV button.',
-      finishBtn: 'Finish'
-    };
+    const GAS_ENDPOINT_RATING = 'https://script.google.com/macros/s/AKfycbynkEwPJ19e8QGs1w4_TakbVLb3SG5aVXNN2_w0yFi8A-KZQAc0olhIpr3jquyNn7cIrA/exec';
+    const GAS_ENDPOINT_RECORDING = 'https://script.google.com/macros/s/AKfycbzH6zFAwQjJ9ekXi_3m_XL852zxY0CDxktTshak8P47mf9VazFIBjPAvM0RfRhwaUUb/exec';
 
     /* ===== STIMULI ===== */
     const STIMULI = [
-      { file: 'audio/intro.wav' },
-      { file: 'audio/baseline.wav' },
-      { file: 'audio/controlled.wav' }
+      { file: 'audio/C11.wav' },
+      { file: 'audio/C12.wav' },
+      { file: 'audio/C21.wav' },
+      { file: 'audio/C22.wav' }
     ];
 
-    /* ===== SLIDER SETTINGS ===== */
-    const SLIDER = {
-      min: 1, max: 7, step: 1, start: 4, require_movement: true,
-      labels: ['1','2','3','4','5','6','7']
-    };
+    const INTRO_AUDIO = 'audio/intro.wav'; // "hi, how can I help you?"
+
+    /* ===== GLOBAL STATE ===== */
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let participantId = null;
+    let demographicsData = null;
+    let currentTimerInterval = null;
+    let isRecording = false;
+    let currentTrialStartTime = null;
+    let responseRecordingChunks = [];
+    let responseMediaRecorder = null;
 
     /* ===== INIT ===== */
     let jsPsych;
@@ -93,7 +247,7 @@
     /* ===== PRELOAD ===== */
     const preload = {
       type: jsPsychPreload,
-      audio: STIMULI.map(s => s.file),
+      audio: [INTRO_AUDIO, ...STIMULI.map(s => s.file)],
       on_error: (file) => {
         console.warn('Failed to load:', file);
       },
@@ -102,23 +256,19 @@
       }
     };
 
-    /* ===== SCREENS ===== */
+    /* ===== WELCOME ===== */
     const welcome = {
       type: jsPsychHtmlButtonResponse,
-      stimulus: `<h2>${TEXTS.welcomeTitle}</h2><p>${TEXTS.welcomeBody}</p>`,
-      choices: [TEXTS.startBtn]
-    };
-
-    const end = {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: `<h2>${TEXTS.endTitle}</h2><p>${TEXTS.endBody}</p>`,
-      choices: [TEXTS.finishBtn]
+      stimulus: `<h2>VUI Interaction Experiment</h2>
+                 <p>음성 인터페이스와 상호작용하고 평가하는 실험입니다.</p>
+                 <p><strong>조용한 환경에서 진행해주세요.</strong></p>`,
+      choices: ['시작']
     };
 
     /* ===== DEMOGRAPHIC SURVEY ===== */
     const demographics = {
       type: jsPsychSurveyHtmlForm,
-      preamble: '<h3>참가자 정보</h3><p>아래 정보를 입력해주세요.</p>',
+      preamble: '<h3>참가자 정보</h3><p>실험을 시작하기 전에 아래 정보를 입력해주세요.</p>',
       html: `
         <div style="text-align: left; max-width: 500px; margin: 0 auto;">
           <p><label for="gender"><strong>성별:</strong></label><br>
@@ -129,7 +279,7 @@
           <input type="text" id="birth_year" name="birth_year" placeholder="YYYY (예: 1995)" pattern="[0-9]{4}" required style="width: 150px;"></p>
           
           <p><label for="birth_month"><strong>태어난 월:</strong></label><br>
-          <input type="text" id="birth_month" name="birth_month" placeholder="MM (예: 03)" pattern="[0-9]{2}" required style="width: 80px;"></p>
+          <input type="text" id="birth_month" name="birth_month" placeholder="MM (예: 03)" pattern="[0-9]{1,2}" required style="width: 80px;"></p>
           
           <p><label for="native_lang"><strong>모국어:</strong></label><br>
           <input type="text" id="native_lang" name="native_lang" placeholder="예: 한국어" required style="width: 200px;"></p>
@@ -144,73 +294,899 @@
       button_label: '제출',
       data: { task: 'demographics' },
       on_finish: (data) => {
+        demographicsData = data.response;
+        participantId = 'P' + Date.now();
+        data.participant_id = participantId;
         data.user_agent = navigator.userAgent;
         data.timestamp = new Date().toISOString();
-        console.log('Demographics:', data.response);
+        console.log('Demographics saved:', demographicsData);
       }
     };
 
-    /* ===== RATING TRIAL ===== */
-    let currentTrialStartTime = null;
+    /* ===== MICROPHONE PERMISSION ===== */
+    const mic_permission = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<h3>마이크 권한 요청</h3><p>녹음을 위해 마이크 사용을 허용해주세요.</p>',
+      choices: ['마이크 허용'],
+      on_finish: async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(track => track.stop());
+          console.log('Microphone permission granted');
+        } catch (err) {
+          alert('마이크 권한이 필요합니다. 브라우저 설정에서 마이크를 허용해주세요.');
+          console.error('Microphone error:', err);
+        }
+      }
+    };
 
-    const rating_trial = {
-      type: jsPsychAudioSliderResponse,
-      stimulus: jsPsych.timelineVariable('file'),
-      prompt: `<p>${TEXTS.prompt}</p>
-               <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-top:4px;">
-                <span>${TEXTS.leftLabel}</span><span>${TEXTS.rightLabel}</span>
-               </div>`,
-      min: SLIDER.min,
-      max: SLIDER.max,
-      slider_start: SLIDER.start,
-      step: SLIDER.step,
-      labels: SLIDER.labels,
-      require_movement: SLIDER.require_movement,
-      response_allowed_while_playing: false,
-      trial_ends_after_audio: false,
-      data: { 
-        task: 'rating', 
-        stimulus_file: jsPsych.timelineVariable('file')
+    /* ===== INTRO PAGE WITH RECORDING ===== */
+    const intro_page = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        return `
+          <div class="recording-container">
+            <div class="vui-image">🎤</div>
+            
+            <div class="guideline-box">
+              <h4>질문 예시:</h4>
+              <p>"오늘 날씨 어때?"<br>
+              "오늘 일정은 뭐야?"<br>
+              "Olivia Dean의 'Man I Need' 틀어줘."</p>
+            </div>
+            
+            <div class="recording-status" id="status">VUI가 응답을 준비 중입니다...</div>
+            <div class="timer" id="timer"></div>
+            
+            <div class="control-buttons">
+              <button class="record-btn" id="recordBtn" onclick="handleRecord()" disabled>녹음 시작</button>
+              <button class="stop-btn" id="stopBtn" onclick="handleStop()" disabled>녹음 완료</button>
+              <button class="next-btn" id="nextBtn" style="display:none;">다음</button>
+            </div>
+          </div>
+        `;
       },
+      choices: [],
+      on_load: async function() {
+        console.log('Intro page loaded');
+        audioChunks = [];
+        isRecording = false;
+        
+        // Play intro audio
+        const audio = new Audio(INTRO_AUDIO);
+        const statusEl = document.getElementById('status');
+        const recordBtn = document.getElementById('recordBtn');
+        
+        statusEl.innerHTML = '🔊 VUI가 말하고 있습니다...';
+        
+        audio.onended = () => {
+          statusEl.innerHTML = '준비되면 녹음 버튼을 눌러주세요';
+          recordBtn.disabled = false;
+        };
+        
+        audio.onerror = (e) => {
+          console.error('Audio playback error:', e);
+          statusEl.innerHTML = '오디오 재생 실패. 녹음 버튼을 눌러 계속 진행하세요.';
+          recordBtn.disabled = false;
+        };
+        
+        try {
+          await audio.play();
+        } catch (err) {
+          console.error('Play error:', err);
+          statusEl.innerHTML = '오디오 재생 실패. 녹음 버튼을 눌러 계속 진행하세요.';
+          recordBtn.disabled = false;
+        }
+        
+        // Setup recording handlers
+        window.handleRecord = async () => {
+          const recordBtn = document.getElementById('recordBtn');
+          const stopBtn = document.getElementById('stopBtn');
+          const statusEl = document.getElementById('status');
+          
+          if (isRecording) return;
+          
+          try {
+            await startRecording();
+            isRecording = true;
+            
+            recordBtn.disabled = true;
+            stopBtn.disabled = false;
+            
+            if (statusEl) {
+              statusEl.innerHTML = '🔴 녹음 중...';
+              statusEl.classList.add('recording-active');
+            }
+            
+            let seconds = 0;
+            currentTimerInterval = setInterval(() => {
+              seconds++;
+              const timerEl = document.getElementById('timer');
+              if (timerEl) {
+                timerEl.textContent = `${seconds}초`;
+              }
+            }, 1000);
+            
+            console.log('Recording started');
+          } catch (err) {
+            console.error('Failed to start recording:', err);
+            alert('녹음 시작 실패: ' + err.message);
+          }
+        };
+        
+        window.handleStop = async () => {
+          const stopBtn = document.getElementById('stopBtn');
+          const nextBtn = document.getElementById('nextBtn');
+          const statusEl = document.getElementById('status');
+          
+          if (!isRecording) return;
+          
+          stopBtn.disabled = true;
+          
+          try {
+            if (statusEl) {
+              statusEl.innerHTML = '녹음 중지 중...';
+              statusEl.classList.remove('recording-active');
+            }
+            
+            await stopRecording();
+            isRecording = false;
+            
+            if (currentTimerInterval) {
+              clearInterval(currentTimerInterval);
+              currentTimerInterval = null;
+            }
+            
+            console.log('Recording stopped, chunks:', audioChunks.length);
+            
+            if (audioChunks.length > 0) {
+              if (statusEl) {
+                statusEl.innerHTML = 'WAV 변환 중...';
+              }
+              
+              const webmBlob = new Blob(audioChunks, { type: 'audio/webm' });
+              console.log('WebM size:', webmBlob.size, 'bytes');
+              
+              const wavBlob = await convertWebMToWav(webmBlob);
+              console.log('WAV size:', wavBlob.size, 'bytes');
+              
+              if (statusEl) {
+                statusEl.innerHTML = '⏳ 서버에 업로드 중...';
+              }
+              
+              const success = await uploadIntroRecording(wavBlob);
+              
+              if (success) {
+                console.log('✓ Upload successful');
+                if (statusEl) {
+                  statusEl.innerHTML = '✅ 업로드 완료!';
+                }
+              } else {
+                console.error('✗ Upload failed');
+                if (statusEl) {
+                  statusEl.innerHTML = '⚠️ 업로드 실패. 다음 버튼을 눌러 계속 진행하세요.';
+                }
+              }
+            } else {
+              if (statusEl) {
+                statusEl.innerHTML = '⚠️ 녹음된 데이터가 없습니다.';
+              }
+            }
+            
+            if (nextBtn) {
+              nextBtn.style.display = 'inline-block';
+              nextBtn.onclick = () => {
+                jsPsych.finishTrial({
+                  task: 'intro_recording',
+                  timestamp: new Date().toISOString()
+                });
+              };
+            }
+            
+          } catch (err) {
+            console.error('Error during stop:', err);
+            if (statusEl) {
+              statusEl.innerHTML = '❌ 오류: ' + err.message;
+            }
+            if (nextBtn) {
+              nextBtn.style.display = 'inline-block';
+              nextBtn.onclick = () => {
+                jsPsych.finishTrial({
+                  task: 'intro_recording',
+                  error: err.message,
+                  timestamp: new Date().toISOString()
+                });
+              };
+            }
+          }
+        };
+      }
+    };
+
+    /* ===== RECORDING FUNCTIONS ===== */
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            channelCount: 1,
+            sampleRate: 16000
+          } 
+        });
+        
+        audioChunks = [];
+        
+        const options = { mimeType: 'audio/webm' };
+        mediaRecorder = new MediaRecorder(stream, options);
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onerror = (event) => {
+          console.error('MediaRecorder error:', event);
+        };
+        
+        mediaRecorder.start(100);
+        console.log('MediaRecorder started');
+      } catch (err) {
+        console.error('Recording start error:', err);
+        throw err;
+      }
+    }
+
+    function stopRecording() {
+      return new Promise((resolve, reject) => {
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+          console.log('MediaRecorder already inactive');
+          resolve();
+          return;
+        }
+        
+        const timeout = setTimeout(() => {
+          reject(new Error('Recording stop timeout'));
+        }, 5000);
+        
+        mediaRecorder.onstop = () => {
+          clearTimeout(timeout);
+          mediaRecorder.stream.getTracks().forEach(track => track.stop());
+          console.log('MediaRecorder stopped and tracks released');
+          resolve();
+        };
+        
+        try {
+          mediaRecorder.stop();
+        } catch (err) {
+          clearTimeout(timeout);
+          reject(err);
+        }
+      });
+    }
+
+    /* ===== RESPONSE RECORDING FUNCTIONS (for multiple choice) ===== */
+    async function startResponseRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            channelCount: 1,
+            sampleRate: 16000
+          } 
+        });
+        
+        responseRecordingChunks = [];
+        
+        const options = { mimeType: 'audio/webm' };
+        responseMediaRecorder = new MediaRecorder(stream, options);
+        
+        responseMediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            responseRecordingChunks.push(event.data);
+          }
+        };
+        
+        responseMediaRecorder.onerror = (event) => {
+          console.error('Response MediaRecorder error:', event);
+        };
+        
+        responseMediaRecorder.start(100);
+        console.log('Response recording started');
+      } catch (err) {
+        console.error('Response recording start error:', err);
+        throw err;
+      }
+    }
+
+    function stopResponseRecording() {
+      return new Promise((resolve, reject) => {
+        if (!responseMediaRecorder || responseMediaRecorder.state === 'inactive') {
+          console.log('Response MediaRecorder already inactive');
+          resolve();
+          return;
+        }
+        
+        const timeout = setTimeout(() => {
+          reject(new Error('Response recording stop timeout'));
+        }, 5000);
+        
+        responseMediaRecorder.onstop = () => {
+          clearTimeout(timeout);
+          responseMediaRecorder.stream.getTracks().forEach(track => track.stop());
+          console.log('Response MediaRecorder stopped');
+          resolve();
+        };
+        
+        try {
+          responseMediaRecorder.stop();
+        } catch (err) {
+          clearTimeout(timeout);
+          reject(err);
+        }
+      });
+    }
+
+    /* ===== WEBM TO WAV CONVERSION ===== */
+    async function convertWebMToWav(webmBlob) {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const arrayBuffer = await webmBlob.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        
+        console.log('Audio decoded:', {
+          duration: audioBuffer.duration,
+          sampleRate: audioBuffer.sampleRate,
+          channels: audioBuffer.numberOfChannels
+        });
+        
+        const wavBlob = audioBufferToWav(audioBuffer);
+        await audioContext.close();
+        
+        return wavBlob;
+      } catch (err) {
+        console.error('WAV conversion error:', err);
+        throw new Error('WAV 변환 실패: ' + err.message);
+      }
+    }
+
+    function audioBufferToWav(audioBuffer) {
+      const numChannels = 1;
+      const sampleRate = audioBuffer.sampleRate;
+      const format = 1;
+      const bitDepth = 16;
+      
+      const bytesPerSample = bitDepth / 8;
+      const blockAlign = numChannels * bytesPerSample;
+      
+      const samples = audioBuffer.getChannelData(0);
+      const dataLength = samples.length * blockAlign;
+      
+      const buffer = new ArrayBuffer(44 + dataLength);
+      const view = new DataView(buffer);
+      
+      writeString(view, 0, 'RIFF');
+      view.setUint32(4, 36 + dataLength, true);
+      writeString(view, 8, 'WAVE');
+      writeString(view, 12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, format, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * blockAlign, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitDepth, true);
+      writeString(view, 36, 'data');
+      view.setUint32(40, dataLength, true);
+      
+      const offset = 44;
+      for (let i = 0; i < samples.length; i++) {
+        const sample = Math.max(-1, Math.min(1, samples[i]));
+        const int16 = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+        view.setInt16(offset + i * 2, int16, true);
+      }
+      
+      return new Blob([buffer], { type: 'audio/wav' });
+    }
+
+    function writeString(view, offset, string) {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    }
+
+    /* ===== UPLOAD INTRO RECORDING ===== */
+    async function uploadIntroRecording(wavBlob) {
+      if (!GAS_ENDPOINT_RECORDING || GAS_ENDPOINT_RECORDING === 'YOUR_APPS_SCRIPT_URL') {
+        console.error('Recording endpoint not configured!');
+        return false;
+      }
+
+      if (!demographicsData) {
+        console.error('Demographics data not available!');
+        return false;
+      }
+
+      try {
+        const base64Audio = await blobToBase64(wavBlob);
+        
+        const payload = {
+          participant_id: participantId,
+          sentence_index: 0,
+          sentence: 'intro_user_query',
+          audio_data: base64Audio,
+          timestamp: new Date().toISOString(),
+          demographics: demographicsData
+        };
+
+        console.log('Uploading intro recording...');
+
+        await fetch(GAS_ENDPOINT_RECORDING, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload)
+        });
+
+        console.log('Intro recording upload attempted');
+        return true;
+        
+      } catch (err) {
+        console.error('Upload error:', err);
+        return false;
+      }
+    }
+
+    /* ===== UPLOAD RESPONSE RECORDING ===== */
+    async function uploadResponseRecording(wavBlob, stimulusFile, trialIndex) {
+      if (!GAS_ENDPOINT_RECORDING) {
+        console.error('Recording endpoint not configured!');
+        return false;
+      }
+
+      try {
+        const base64Audio = await blobToBase64(wavBlob);
+        
+        const payload = {
+          participant_id: participantId,
+          sentence_index: trialIndex,
+          sentence: `response_to_${stimulusFile}`,
+          audio_data: base64Audio,
+          timestamp: new Date().toISOString(),
+          demographics: demographicsData
+        };
+
+        console.log('Uploading response recording...');
+
+        await fetch(GAS_ENDPOINT_RECORDING, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload)
+        });
+
+        console.log('Response recording upload attempted');
+        return true;
+        
+      } catch (err) {
+        console.error('Upload error:', err);
+        return false;
+      }
+    }
+
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result.split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    /* ===== RATING TRIAL WITH TWO SCALES AND MULTIPLE CHOICE ===== */
+    const rating_trial = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        const stimFile = jsPsych.timelineVariable('file');
+        console.log('Creating stimulus with file:', stimFile);
+        return `
+          <div style="max-width: 700px; margin: 0 auto; padding: 20px;">
+            <div id="audioPlayingIndicator" style="text-align: center; margin: 30px 0; padding: 20px; background: #e3f2fd; border-radius: 10px; display: none;">
+              <div style="font-size: 48px; margin-bottom: 10px;">🔊</div>
+              <div style="font-size: 18px; color: #1976d2; font-weight: bold;">VUI 응답 재생 중...</div>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <button id="replayBtn" style="font-size: 18px; padding: 15px 40px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; display: none;">
+                🔊 다시 듣기
+              </button>
+              <div id="audioStatus" style="margin-top: 10px; color: #666; font-weight: bold;"></div>
+            </div>
+            
+            <div id="ratingsContainer" style="display: none;">
+              <div class="rating-prompt">
+                <h4>질문 1: 이 응답이 "비꼬는" 범주와 얼마나 강하게 일치했습니까?</h4>
+                <div style="margin: 20px 0;">
+                  <input type="range" id="slider1" min="1" max="7" value="4" step="1" style="width: 100%;">
+                  <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-top:8px;">
+                    <span>전혀 아님</span>
+                    <span>매우 강하게</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-top:4px;color:#666;">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="rating-prompt">
+                <h4>질문 2: 계속해서 대화를 이어 나가시겠습니까?</h4>
+                <div style="margin: 20px 0;">
+                  <input type="range" id="slider2" min="1" max="7" value="4" step="1" style="width: 100%;">
+                  <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-top:8px;">
+                    <span>전혀 아님</span>
+                    <span>매우 그렇다</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-top:4px;color:#666;">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="multiple-choice-section">
+                <h4>어떻게 답변하시겠습니까?</h4>
+                
+                <div class="choice-option">
+                  <label>
+                    <input type="radio" name="response_choice" value="repeat_same" id="choice1">
+                    똑같은 말을 반복할 것이다.
+                  </label>
+                </div>
+                
+                <div class="choice-option">
+                  <label>
+                    <input type="radio" name="response_choice" value="repeat_slowly" id="choice2">
+                    똑같이 반복하되, 천천히 말할 것이다.
+                  </label>
+                </div>
+                
+                <div class="choice-option">
+                  <label>
+                    <input type="radio" name="response_choice" value="rephrase" id="choice3">
+                    동일한 부탁을 다르게 말할 것이다.
+                  </label>
+                </div>
+                
+                <div class="choice-option">
+                  <label>
+                    <input type="radio" name="response_choice" value="new_request" id="choice4">
+                    새로운 부탁을 할 것이다.
+                  </label>
+                </div>
+                
+                <div class="record-choice">
+                  <label>
+                    <input type="radio" name="response_choice" value="record_own" id="choice5">
+                    직접 녹음하기
+                  </label>
+                  <div class="record-choice-controls">
+                    <button class="mini-record-btn" id="miniRecordBtn" onclick="handleMiniRecord()" disabled>
+                      🔴 녹음 시작
+                    </button>
+                    <button class="mini-stop-btn" id="miniStopBtn" onclick="handleMiniStop()" disabled>
+                      ⏹️ 녹음 완료
+                    </button>
+                    <span id="miniStatus" style="margin-left: 10px; font-size: 14px;"></span>
+                    <span id="miniTimer" style="margin-left: 10px; font-weight: bold;"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+      choices: ['다음'],
+      button_html: '<button class="jspsych-btn" id="submitBtn" style="display:none;">%choice%</button>',
       on_load: function() {
-        // 트라이얼 시작 시점 기록
         currentTrialStartTime = new Date().toISOString();
-        console.log('Trial loaded, start time:', currentTrialStartTime);
+        const stimFile = jsPsych.timelineVariable('file');
+        console.log('=== Rating trial loaded ===');
+        console.log('Stimulus file:', stimFile);
+        
+        // Create audio element dynamically
+        let trialAudio = null;
+        let audioPlayed = false;
+        let slider1Moved = false;
+        let slider2Moved = false;
+        let choiceSelected = false;
+        let miniRecordingCompleted = false;
+        let miniRecordingInProgress = false;
+        let miniTimerInterval = null;
+        
+        const audioStatus = document.getElementById('audioStatus');
+        const ratingsContainer = document.getElementById('ratingsContainer');
+        const audioIndicator = document.getElementById('audioPlayingIndicator');
+        const replayBtn = document.getElementById('replayBtn');
+        
+        // Function to play audio
+        const playAudioFile = async (isReplay = false) => {
+          console.log(isReplay ? 'Replaying audio' : 'Auto-playing audio on page load');
+          
+          // Create new audio element
+          if (trialAudio) {
+            trialAudio.pause();
+            trialAudio = null;
+          }
+          
+          trialAudio = new Audio(stimFile);
+          
+          console.log('Audio src:', trialAudio.src);
+          
+          // Show playing indicator
+          if (!isReplay) {
+            audioIndicator.style.display = 'block';
+            audioStatus.textContent = '';
+          } else {
+            audioStatus.textContent = '재생 중...';
+            audioStatus.style.color = '#1976d2';
+          }
+          
+          // Add event listeners
+          trialAudio.addEventListener('playing', () => {
+            console.log('Audio is playing');
+          });
+          
+          trialAudio.addEventListener('ended', () => {
+            console.log('Audio playback ended');
+            audioIndicator.style.display = 'none';
+            audioStatus.textContent = '';
+            replayBtn.style.display = 'inline-block';
+            
+            if (!audioPlayed) {
+              audioPlayed = true;
+              ratingsContainer.style.display = 'block';
+              checkSubmitReady();
+            }
+          });
+          
+          trialAudio.addEventListener('error', (e) => {
+            console.error('Audio error:', e);
+            console.error('Error code:', trialAudio.error?.code);
+            
+            audioIndicator.style.display = 'none';
+            
+            let errorMsg = '오디오 재생 실패: ';
+            switch(trialAudio.error?.code) {
+              case 1: errorMsg += '재생 중단됨'; break;
+              case 2: errorMsg += '네트워크 오류'; break;
+              case 3: errorMsg += '파일 디코딩 실패 (파일 형식 확인 필요)'; break;
+              case 4: errorMsg += '파일을 찾을 수 없음 (경로: ' + stimFile + ')'; break;
+              default: errorMsg += '알 수 없는 오류';
+            }
+            audioStatus.textContent = errorMsg;
+            audioStatus.style.color = '#dc3545';
+            
+            // Still show ratings to allow continuing
+            if (!audioPlayed) {
+              audioPlayed = true;
+              ratingsContainer.style.display = 'block';
+              replayBtn.style.display = 'inline-block';
+              checkSubmitReady();
+            }
+          });
+          
+          try {
+            console.log('Attempting to play audio...');
+            await trialAudio.play();
+            console.log('Audio play successful');
+          } catch (err) {
+            console.error('Play failed:', err);
+            audioIndicator.style.display = 'none';
+            audioStatus.textContent = '재생 실패: ' + err.message + ' (파일: ' + stimFile + ')';
+            audioStatus.style.color = '#dc3545';
+            
+            // Still show ratings to allow continuing
+            if (!audioPlayed) {
+              audioPlayed = true;
+              ratingsContainer.style.display = 'block';
+              replayBtn.style.display = 'inline-block';
+              checkSubmitReady();
+            }
+          }
+        };
+        
+        // AUTO-PLAY on page load
+        setTimeout(() => {
+          playAudioFile(false);
+        }, 500); // Small delay to ensure page is fully loaded
+        
+        // Replay button handler
+        replayBtn.onclick = () => {
+          playAudioFile(true);
+        };
+        
+        function checkSubmitReady() {
+          const submitBtn = document.getElementById('submitBtn');
+          const choice5 = document.getElementById('choice5');
+          
+          // If "직접 녹음하기" is selected, need recording to be completed
+          if (choice5.checked) {
+            if (audioPlayed && slider1Moved && slider2Moved && miniRecordingCompleted) {
+              submitBtn.style.display = 'inline-block';
+            }
+          } else {
+            // For other choices, just need audio, sliders, and choice
+            if (audioPlayed && slider1Moved && slider2Moved && choiceSelected) {
+              submitBtn.style.display = 'inline-block';
+            }
+          }
+        }
+        
+        const slider1 = document.getElementById('slider1');
+        const slider2 = document.getElementById('slider2');
+        
+        slider1.addEventListener('input', () => {
+          slider1Moved = true;
+          checkSubmitReady();
+        });
+        
+        slider2.addEventListener('input', () => {
+          slider2Moved = true;
+          checkSubmitReady();
+        });
+        
+        // Radio button listeners
+        const radioButtons = document.querySelectorAll('input[name="response_choice"]');
+        radioButtons.forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            choiceSelected = true;
+            const miniRecordBtn = document.getElementById('miniRecordBtn');
+            const miniStopBtn = document.getElementById('miniStopBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // If "직접 녹음하기" is selected, enable recording
+            if (e.target.id === 'choice5') {
+              miniRecordBtn.disabled = false;
+              // Hide submit button until recording is done
+              submitBtn.style.display = 'none';
+            } else {
+              miniRecordBtn.disabled = true;
+              miniStopBtn.disabled = true;
+              checkSubmitReady();
+            }
+          });
+        });
+        
+        // Mini recording handlers
+        window.handleMiniRecord = async () => {
+          if (miniRecordingInProgress) return;
+          
+          const miniRecordBtn = document.getElementById('miniRecordBtn');
+          const miniStopBtn = document.getElementById('miniStopBtn');
+          const miniStatus = document.getElementById('miniStatus');
+          
+          try {
+            await startResponseRecording();
+            miniRecordingInProgress = true;
+            
+            miniRecordBtn.disabled = true;
+            miniStopBtn.disabled = false;
+            miniStatus.textContent = '🔴 녹음 중...';
+            miniStatus.style.color = '#dc3545';
+            
+            let seconds = 0;
+            miniTimerInterval = setInterval(() => {
+              seconds++;
+              const miniTimer = document.getElementById('miniTimer');
+              if (miniTimer) {
+                miniTimer.textContent = `${seconds}초`;
+              }
+            }, 1000);
+            
+            console.log('Mini recording started');
+          } catch (err) {
+            console.error('Mini recording start error:', err);
+            alert('녹음 시작 실패: ' + err.message);
+          }
+        };
+        
+        window.handleMiniStop = async () => {
+          if (!miniRecordingInProgress) return;
+          
+          const miniStopBtn = document.getElementById('miniStopBtn');
+          const miniStatus = document.getElementById('miniStatus');
+          
+          miniStopBtn.disabled = true;
+          miniStatus.textContent = '처리 중...';
+          miniStatus.style.color = '#666';
+          
+          try {
+            await stopResponseRecording();
+            miniRecordingInProgress = false;
+            
+            if (miniTimerInterval) {
+              clearInterval(miniTimerInterval);
+              miniTimerInterval = null;
+            }
+            
+            console.log('Mini recording stopped, chunks:', responseRecordingChunks.length);
+            
+            if (responseRecordingChunks.length > 0) {
+              miniStatus.textContent = '변환 중...';
+              
+              const webmBlob = new Blob(responseRecordingChunks, { type: 'audio/webm' });
+              const wavBlob = await convertWebMToWav(webmBlob);
+              
+              miniStatus.textContent = '업로드 중...';
+              
+              const success = await uploadResponseRecording(wavBlob, stimFile, jsPsych.data.get().count());
+              
+              if (success) {
+                miniStatus.textContent = '✅ 녹음 완료!';
+                miniStatus.style.color = '#28a745';
+                miniRecordingCompleted = true;
+                checkSubmitReady();
+              } else {
+                miniStatus.textContent = '⚠️ 업로드 실패';
+                miniStatus.style.color = '#ffc107';
+                miniRecordingCompleted = true; // Allow to proceed anyway
+                checkSubmitReady();
+              }
+            } else {
+              miniStatus.textContent = '⚠️ 녹음 데이터 없음';
+              miniStatus.style.color = '#ffc107';
+            }
+            
+          } catch (err) {
+            console.error('Mini recording stop error:', err);
+            miniStatus.textContent = '❌ 오류: ' + err.message;
+            miniStatus.style.color = '#dc3545';
+          }
+        };
       },
       on_finish: (data) => {
-        data.rating = data.response;
-        data.stimulus = data.stimulus_file || data.stimulus;
+        const slider1 = document.getElementById('slider1');
+        const slider2 = document.getElementById('slider2');
+        const selectedChoice = document.querySelector('input[name="response_choice"]:checked');
+        
+        data.task = 'rating';
+        data.stimulus = jsPsych.timelineVariable('file');
+        data.sarcasm_rating = parseInt(slider1.value);
+        data.continue_conversation = parseInt(slider2.value);
+        data.response_choice = selectedChoice ? selectedChoice.value : 'none';
         data.trial_start_time = currentTrialStartTime;
-        data.response_time = new Date().toISOString(); // 응답한 시점
+        data.response_time = new Date().toISOString();
         data.user_agent = navigator.userAgent;
+        data.participant_id = participantId;
         
         console.log('Trial finished:', {
           stimulus: data.stimulus,
-          rating: data.rating,
-          trial_start: data.trial_start_time,
-          response: data.response_time
+          sarcasm_rating: data.sarcasm_rating,
+          continue_conversation: data.continue_conversation,
+          response_choice: data.response_choice
         });
       }
     };
 
-    /* ===== RANDOM ORDER BLOCK ===== */
+    /* ===== RATING BLOCK ===== */
     const rating_block = {
       timeline: [rating_trial],
       timeline_variables: STIMULI,
       randomize_order: true
     };
 
-    /* ===== RUN ===== */
-    if (jsPsych) {
-      console.log('Starting experiment...');
-      jsPsych.run([preload, welcome, rating_block, demographics, end]);
-    } else {
-      console.error('jsPsych not initialized');
-    }
+    /* ===== END ===== */
+    const end = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `<h2>감사합니다!</h2>
+                 <p>실험이 완료되었습니다.</p>
+                 <p>모든 데이터가 저장되었습니다.</p>`,
+      choices: ['종료']
+    };
 
-    /* ===== GOOGLE UPLOAD ===== */
+    /* ===== GOOGLE UPLOAD FOR RATINGS ===== */
     async function uploadAllRowsToGoogle() {
-      if (!GAS_ENDPOINT || GAS_ENDPOINT.startsWith('PASTE_')) {
+      if (!GAS_ENDPOINT_RATING || GAS_ENDPOINT_RATING.startsWith('PASTE_')) {
         console.warn('No GAS endpoint configured.');
         return false;
       }
@@ -223,27 +1199,29 @@
         const rows = allData
           .filter(d => d.task === 'rating')
           .map(d => {
-            // rt 필드를 명시적으로 제외
             const { rt, rt_original, rt_after_audio, ...cleanData } = d;
             return {
-              trial_index:      cleanData.trial_index,
-              task:             cleanData.task,
-              stimulus:         cleanData.stimulus || cleanData.stimulus_file || '',
-              rating:           cleanData.rating ?? cleanData.response,
-              time_elapsed:     cleanData.time_elapsed,
-              trial_start_time: cleanData.trial_start_time || '',
-              response_time:    cleanData.response_time || '',
-              user_agent:       cleanData.user_agent || navigator.userAgent,
-              gender:           demographics.gender || '',
-              birth_year:       demographics.birth_year || '',
-              birth_month:      demographics.birth_month || '',
-              native_lang:      demographics.native_lang || '',
-              dialect:          demographics.dialect || '',
-              foreign_lang:     demographics.foreign_lang || ''
+              participant_id:     participantId || '',
+              trial_index:        cleanData.trial_index,
+              task:               cleanData.task,
+              stimulus:           cleanData.stimulus || '',
+              sarcasm_rating:     cleanData.sarcasm_rating ?? '',
+              continue_conversation: cleanData.continue_conversation ?? '',
+              response_choice:    cleanData.response_choice || '',
+              time_elapsed:       cleanData.time_elapsed,
+              trial_start_time:   cleanData.trial_start_time || '',
+              response_time:      cleanData.response_time || '',
+              user_agent:         cleanData.user_agent || navigator.userAgent,
+              gender:             demographics.gender || '',
+              birth_year:         demographics.birth_year || '',
+              birth_month:        demographics.birth_month || '',
+              native_lang:        demographics.native_lang || '',
+              dialect:            demographics.dialect || '',
+              foreign_lang:       demographics.foreign_lang || ''
             };
           });
 
-        await fetch(GAS_ENDPOINT, {
+        await fetch(GAS_ENDPOINT_RATING, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
@@ -255,6 +1233,22 @@
         console.warn('Upload error:', e);
         return false;
       }
+    }
+
+    /* ===== RUN EXPERIMENT ===== */
+    if (jsPsych) {
+      console.log('Starting experiment...');
+      jsPsych.run([
+        preload,
+        welcome,
+        demographics,
+        mic_permission,
+        intro_page,
+        rating_block,
+        end
+      ]);
+    } else {
+      console.error('jsPsych not initialized');
     }
   </script>
 </body>
