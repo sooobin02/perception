@@ -1148,7 +1148,7 @@
         
         data.task = 'rating';
         data.stimulus = jsPsych.timelineVariable('file');
-        data.sarcasm_rating = parseInt(slider1.value);
+        data.cuteness_rating = parseInt(slider1.value);
         data.continue_conversation = parseInt(slider2.value);
         data.response_choice = selectedChoice ? selectedChoice.value : 'none';
         data.trial_start_time = currentTrialStartTime;
@@ -1158,7 +1158,7 @@
         
         console.log('Trial finished:', {
           stimulus: data.stimulus,
-          sarcasm_rating: data.sarcasm_rating,
+          cuteness_rating: data.cuteness_rating,
           continue_conversation: data.continue_conversation,
           response_choice: data.response_choice
         });
@@ -1250,6 +1250,7 @@
   </script>
 </body>
 </html>
+
 
 
 
