@@ -286,9 +286,6 @@
           
           <p><label for="dialect"><strong>방언:</strong></label><br>
           <input type="text" id="dialect" name="dialect" placeholder="예: 서울, 경상도" style="width: 200px;"></p>
-          
-          <p><label for="foreign_lang"><strong>외국어:</strong></label><br>
-          <input type="text" id="foreign_lang" name="foreign_lang" placeholder="예: 영어, 일본어" style="width: 300px;"></p>
         </div>
       `,
       button_label: '제출',
@@ -806,7 +803,7 @@
             
             <div id="ratingsContainer" style="display: none;">
               <div class="rating-prompt">
-                <h4>질문 1: 이 응답이 "비꼬는" 범주와 얼마나 강하게 일치했습니까?</h4>
+                <h4>질문 1: 이 응답이 "귀여운" 범주와 얼마나 강하게 일치했습니까?</h4>
                 <div style="margin: 20px 0;">
                   <input type="range" id="slider1" min="1" max="7" value="4" step="1" style="width: 100%;">
                   <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-top:8px;">
@@ -1204,7 +1201,7 @@
               trial_index:        cleanData.trial_index,
               task:               cleanData.task,
               stimulus:           cleanData.stimulus || '',
-              sarcasm_rating:     cleanData.sarcasm_rating ?? '',
+              cuteness_rating:     cleanData.cuteness_rating ?? '',
               continue_conversation: cleanData.continue_conversation ?? '',
               response_choice:    cleanData.response_choice || '',
               time_elapsed:       cleanData.time_elapsed,
@@ -1216,7 +1213,7 @@
               birth_month:        demographics.birth_month || '',
               native_lang:        demographics.native_lang || '',
               dialect:            demographics.dialect || '',
-              foreign_lang:       demographics.foreign_lang || ''
+            
             };
           });
 
@@ -1252,5 +1249,6 @@
   </script>
 </body>
 </html>
+
 
 
