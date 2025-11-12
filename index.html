@@ -785,8 +785,6 @@
     const rating_trial = {
       type: jsPsychHtmlButtonResponse,
       stimulus: () => {
-        const stimFile = jsPsych.timelineVariable('file');
-        console.log('Creating stimulus with file:', stimFile);
         return `
           <div style="max-width: 700px; margin: 0 auto; padding: 20px;">
             <div id="audioPlayingIndicator" style="text-align: center; margin: 30px 0; padding: 20px; background: #e3f2fd; border-radius: 10px; display: none;">
@@ -885,9 +883,12 @@
       choices: ['다음'],
       on_load: function() {
         currentTrialStartTime = new Date().toISOString();
-        const stimFile = jsPsych.timelineVariable('file');
+        const stimObject = jsPsych.evaluateTimelineVariable('file');
         console.log('=== Rating trial loaded ===');
-        console.log('Stimulus file:', stimFile);
+        console.log('Raw stimeObject:', stimObject, typeof stimObject);
+
+        const audioPath = stimObject.file || stimObject;
+        console.log('Audio path to use:', audioPath);
         
         // Create audio element dynamically
         let trialAudio = null;
@@ -914,7 +915,7 @@
             trialAudio = null;
           }
           
-          trialAudio = new Audio(stimFile);
+          trialAudio = new Audio(audioPath);
           
           console.log('Audio src:', trialAudio.src);
           
@@ -1115,7 +1116,7 @@
               
               miniStatus.textContent = '업로드 중...';
               
-              const success = await uploadResponseRecording(wavBlob, stimFile, jsPsych.data.get().count());
+              const success = await uploadResponseRecording(wavBlob, audioPath, jsPsych.data.get().count());
               
               if (success) {
                 miniStatus.textContent = '✅ 녹음 완료!';
