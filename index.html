@@ -135,6 +135,7 @@
       border-radius: 4px;
       cursor: pointer;
       transition: background 0.2s;
+      display: block;
     }
     .choice-option:hover {
       background: #e6f2ff;
@@ -142,41 +143,90 @@
     .choice-option input[type="radio"] {
       margin-right: 10px;
     }
-    .record-choice {
-      padding: 15px;
-      background: white;
-      border-radius: 4px;
-      border: 2px dashed #667eea;
-      margin-top: 15px;
+    .recording-section {
+      margin-top: 30px;
+      padding: 20px;
+      background: #fff3cd;
+      border-radius: 5px;
+      border: 2px solid #ffc107;
+      display: none;
     }
-    .record-choice-controls {
+    .recording-section.visible {
+      display: block;
+    }
+    .recording-section h4 {
+      margin-top: 0;
+      color: #856404;
+    }
+    .record-controls {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 15px;
+      margin-top: 15px;
     }
-    .mini-record-btn {
+    .record-btn-main {
       background-color: #dc3545;
       color: white;
       border: none;
       border-radius: 5px;
-      padding: 10px 20px;
+      padding: 15px 30px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 16px;
+      font-weight: bold;
     }
-    .mini-stop-btn {
+    .stop-btn-main {
       background-color: #28a745;
       color: white;
       border: none;
       border-radius: 5px;
-      padding: 10px 20px;
+      padding: 15px 30px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 16px;
+      font-weight: bold;
     }
-    .mini-record-btn:disabled, .mini-stop-btn:disabled {
+    .record-btn-main:disabled, .stop-btn-main:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+    .consent-box {
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 30px;
+      background: #f8f9fa;
+      border: 2px solid #667eea;
+      border-radius: 10px;
+      text-align: left;
+    }
+    .consent-box h2 {
+      color: #667eea;
+      margin-top: 0;
+      text-align: center;
+    }
+    .consent-box p {
+      line-height: 1.8;
+      margin: 15px 0;
+    }
+    .consent-checkbox {
+      margin: 30px 0 20px 0;
+      padding: 20px;
+      background: white;
+      border-radius: 5px;
+      border: 2px solid #667eea;
+    }
+    .consent-checkbox label {
+      display: flex;
+      align-items: flex-start;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .consent-checkbox input[type="checkbox"] {
+      margin-right: 15px;
+      margin-top: 3px;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -184,10 +234,6 @@
   <div id="jspsych-target"></div>
   
   <script>
-    /******************************************************
-     * VUI Interaction Experiment
-     ******************************************************/
-
     console.log('Script starting...');
 
     /* ===== CONFIG ===== */
@@ -202,7 +248,7 @@
       { file: 'audio/c22.wav' }
     ];
 
-    const INTRO_AUDIO = 'audio/intro.wav'; // "hi, how can I help you?"
+    const INTRO_AUDIO = 'audio/intro.wav';
 
     /* ===== GLOBAL STATE ===== */
     let mediaRecorder = null;
@@ -214,6 +260,7 @@
     let currentTrialStartTime = null;
     let responseRecordingChunks = [];
     let responseMediaRecorder = null;
+    let trialDataStore = {};
 
     /* ===== INIT ===== */
     let jsPsych;
@@ -241,13 +288,15 @@
       console.log('jsPsych initialized:', jsPsych);
     } catch (error) {
       console.error('Error initializing jsPsych:', error);
-      document.body.innerHTML = '<div style="padding: 20px; color: red;">Error initializing jsPsych: ' + error.message + '</div>';
     }
 
     /* ===== PRELOAD ===== */
+    const audioFiles = STIMULI.map(s => s.file);
+    if (INTRO_AUDIO) audioFiles.unshift(INTRO_AUDIO);
+
     const preload = {
       type: jsPsychPreload,
-      audio: [INTRO_AUDIO, ...STIMULI.map(s => s.file)],
+      audio: audioFiles,
       on_error: (file) => {
         console.warn('Failed to load:', file);
       },
@@ -263,6 +312,51 @@
                  <p>음성 인터페이스와 상호작용하고 평가하는 실험입니다.</p>
                  <p><strong>조용한 환경에서 진행해주세요.</strong></p>`,
       choices: ['시작']
+    };
+
+    /* ===== CONSENT FORM ===== */
+    const consent = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `
+        <div class="consent-box">
+          <h2>동의서</h2>
+          <p>실험을 시작하기 전에, 간단한 동의서 작성을 하겠습니다.</p>
+          
+          <p><strong>연구책임자:</strong> 오수빈<br>
+          <strong>연락처:</strong> sooobin02@g.skku.edu</p>
+          
+          <p><strong>연구 목적:</strong><br>
+          이름, 성별, 나이를 요청할 수 있으나, 이 정보와 과제에 대한 응답은 기밀로 유지됩니다.</p>
+          
+          <p><strong>절차:</strong><br>
+          이 연구에 참여하는 데 약 10분 정도 소요됩니다.<br>
+          음성 사용자 인터페이스와의 상호작용을 살펴보기 위해 설계되었습니다.<br>
+          음성 AI의 발화를 잘 들어보시고, 실제 음성 AI와 대화하듯이 임해주시길 바랍니다.</p>
+          
+          <p><strong>위험:</strong> 이 연구와 관련된 알려진 위험은 없습니다.</p>
+          
+          <p><strong>기밀성:</strong> 이름, 연락처 및 기타 식별 가능한 정보는 비공개로 유지되며, 수집된 데이터와 연결되지 않습니다. 참가자는 학술 출판물/발표에서 이름으로 식별되지 않습니다. 주연구자와 연구실 구성원만 이 정보에 접근할 수 있습니다.</p>
+          
+          <div class="consent-checkbox">
+            <label>
+              <input type="checkbox" id="consentCheck">
+              <span>동의서를 읽고, 이 연구에 참여하기로 동의합니다.</span>
+            </label>
+          </div>
+        </div>
+      `,
+      choices: ['다음'],
+      on_load: () => {
+        const btn = document.querySelector('.jspsych-btn');
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        
+        const checkbox = document.getElementById('consentCheck');
+        checkbox.addEventListener('change', () => {
+          btn.disabled = !checkbox.checked;
+          btn.style.opacity = checkbox.checked ? '1' : '0.5';
+        });
+      }
     };
 
     /* ===== DEMOGRAPHIC SURVEY ===== */
@@ -349,7 +443,6 @@
         audioChunks = [];
         isRecording = false;
         
-        // Play intro audio
         const audio = new Audio(INTRO_AUDIO);
         const statusEl = document.getElementById('status');
         const recordBtn = document.getElementById('recordBtn');
@@ -375,7 +468,6 @@
           recordBtn.disabled = false;
         }
         
-        // Setup recording handlers
         window.handleRecord = async () => {
           const recordBtn = document.getElementById('recordBtn');
           const stopBtn = document.getElementById('stopBtn');
@@ -561,7 +653,7 @@
       });
     }
 
-    /* ===== RESPONSE RECORDING FUNCTIONS (for multiple choice) ===== */
+    /* ===== RESPONSE RECORDING FUNCTIONS ===== */
     async function startResponseRecording() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -781,376 +873,341 @@
       });
     }
 
-    /* ===== RATING TRIAL WITH TWO SCALES AND MULTIPLE CHOICE ===== */
+    /* ===== RATING TRIAL ===== */
     const rating_trial = {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: () => {
+      type: jsPsychSurveyHtmlForm,
+      html: function() {
+        const currentStimulus = jsPsych.evaluateTimelineVariable('file');
+        console.log('Audio path:', currentStimulus);
+        
         return `
-          <div style="max-width: 700px; margin: 0 auto; padding: 20px;">
-            <div id="audioPlayingIndicator" style="text-align: center; margin: 30px 0; padding: 20px; background: #e3f2fd; border-radius: 10px; display: none;">
-              <div style="font-size: 48px; margin-bottom: 10px;">🔊</div>
-              <div style="font-size: 18px; color: #1976d2; font-weight: bold;">VUI 응답 재생 중...</div>
-            </div>
+          <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+            <h3>음성 응답 평가</h3>
             
-            <div style="text-align: center; margin: 30px 0;">
-              <button id="replayBtn" style="font-size: 18px; padding: 15px 40px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; display: none;">
-                🔊 다시 듣기
+            <div class="vui-image">🎙️</div>
+            
+            <div style="margin: 30px 0;">
+              <button id="playBtn" type="button"
+                style="font-size: 18px; padding: 15px 40px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                ▶️ 음성 재생
               </button>
-              <div id="audioStatus" style="margin-top: 10px; color: #666; font-weight: bold;"></div>
+              <div id="audioStatus" style="margin-top: 15px; min-height: 24px; color: #666;"></div>
             </div>
-            
-            <div id="ratingsContainer" style="display: none;">
-              <div class="rating-prompt">
-                <h4>질문 1: 이 응답이 "귀여운" 범주와 얼마나 강하게 일치했습니까?</h4>
-                <div style="margin: 20px 0;">
-                  <input type="range" id="slider1" min="1" max="7" value="4" step="1" style="width: 100%;">
-                  <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-top:8px;">
-                    <span>전혀 아님</span>
-                    <span>매우 강하게</span>
-                  </div>
-                  <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-top:4px;color:#666;">
-                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
-                  </div>
-                </div>
+            <audio id="trialAudio" preload="auto" style="display:none;">
+              <source src="${currentStimulus}" type="audio/wav">
+            </audio>
+
+            <div class="rating-prompt">
+              <h4>1. 이 음성이 얼마나 귀엽게 들리나요?</h4>
+              <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0;">
+                <span>전혀 귀엽지 않음</span>
+                <input type="range" id="slider1" name="cuteness" min="1" max="7" value="4" 
+                  style="width: 300px; cursor: pointer;">
+                <span>매우 귀여움</span>
               </div>
-              
-              <div class="rating-prompt">
-                <h4>질문 2: 계속해서 대화를 이어 나가시겠습니까?</h4>
-                <div style="margin: 20px 0;">
-                  <input type="range" id="slider2" min="1" max="7" value="4" step="1" style="width: 100%;">
-                  <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-top:8px;">
-                    <span>전혀 아님</span>
-                    <span>매우 그렇다</span>
-                  </div>
-                  <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-top:4px;color:#666;">
-                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
-                  </div>
-                </div>
+              <div id="slider1Value" style="font-size: 18px; font-weight: bold; color: #667eea;">4</div>
+            </div>
+
+            <div class="rating-prompt">
+              <h4>2. 이 음성과 대화를 계속하고 싶나요?</h4>
+              <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0;">
+                <span>전혀 그렇지 않음</span>
+                <input type="range" id="slider2" name="continue" min="1" max="7" value="4" 
+                  style="width: 300px; cursor: pointer;">
+                <span>매우 그러함</span>
               </div>
-              
-              <div class="multiple-choice-section">
-                <h4>어떻게 답변하시겠습니까?</h4>
-                
-                <div class="choice-option">
-                  <label>
-                    <input type="radio" name="response_choice" value="repeat_same" id="choice1">
-                    똑같은 말을 반복할 것이다.
-                  </label>
-                </div>
-                
-                <div class="choice-option">
-                  <label>
-                    <input type="radio" name="response_choice" value="repeat_slowly" id="choice2">
-                    똑같이 반복하되, 천천히 말할 것이다.
-                  </label>
-                </div>
-                
-                <div class="choice-option">
-                  <label>
-                    <input type="radio" name="response_choice" value="rephrase" id="choice3">
-                    동일한 부탁을 다르게 말할 것이다.
-                  </label>
-                </div>
-                
-                <div class="choice-option">
-                  <label>
-                    <input type="radio" name="response_choice" value="new_request" id="choice4">
-                    새로운 부탁을 할 것이다.
-                  </label>
-                </div>
-                
-                <div class="record-choice">
-                  <label>
-                    <input type="radio" name="response_choice" value="record_own" id="choice5">
-                    직접 녹음하기
-                  </label>
-                  <div class="record-choice-controls">
-                    <button class="mini-record-btn" id="miniRecordBtn" onclick="handleMiniRecord()" disabled>
-                      🔴 녹음 시작
-                    </button>
-                    <button class="mini-stop-btn" id="miniStopBtn" onclick="handleMiniStop()" disabled>
-                      ⏹️ 녹음 완료
-                    </button>
-                    <span id="miniStatus" style="margin-left: 10px; font-size: 14px;"></span>
-                    <span id="miniTimer" style="margin-left: 10px; font-weight: bold;"></span>
-                  </div>
-                </div>
+              <div id="slider2Value" style="font-size: 18px; font-weight: bold; color: #667eea;">4</div>
+            </div>
+
+            <div class="multiple-choice-section">
+              <h4>3. 이 음성에 어떻게 대응하시겠습니까?</h4>
+              <div style="text-align: left; max-width: 600px; margin: 20px auto;">
+                <label class="choice-option">
+                  <input type="radio" name="response_choice" id="choice1" value="choice1" required>
+                  그만둬
+                </label>
+                <label class="choice-option">
+                  <input type="radio" name="response_choice" id="choice2" value="choice2">
+                  계속해
+                </label>
+                <label class="choice-option">
+                  <input type="radio" name="response_choice" id="choice3" value="choice3">
+                  그만해
+                </label>
+                <label class="choice-option">
+                  <input type="radio" name="response_choice" id="choice4" value="choice4">
+                  계속하세요
+                </label>
+                <label class="choice-option">
+                  <input type="radio" name="response_choice" id="choice5" value="choice5">
+                  기타 (직접 입력):
+                </label>
+                <input type="text" id="otherText" name="other_text" placeholder="여기에 입력하세요" 
+                  style="width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 4px;" disabled>
               </div>
+            </div>
+
+            <div class="recording-section" id="recordingSection">
+              <h4>🎤 음성 녹음</h4>
+              <div id="selectedResponse" style="font-size: 16px; margin: 15px 0; padding: 15px; background: white; border-radius: 4px; min-height: 40px;">
+                위에서 응답을 선택해주세요
+              </div>
+              <div class="record-controls">
+                <button id="recordBtn" type="button" class="record-btn-main" disabled>
+                  🔴 녹음 시작
+                </button>
+                <button id="stopBtn" type="button" class="stop-btn-main" disabled>
+                  ⏹️ 녹음 종료
+                </button>
+              </div>
+              <div id="recordStatus" style="margin-top: 15px; min-height: 24px;"></div>
+              <div id="recordTimer" style="font-size: 20px; font-weight: bold; margin-top: 10px;"></div>
             </div>
           </div>
         `;
       },
-      choices: ['다음'],
+      button_label: '다음',
       on_load: function() {
         currentTrialStartTime = new Date().toISOString();
-        const stimObject = jsPsych.evaluateTimelineVariable('file');
-        console.log('=== Rating trial loaded ===');
-        console.log('Raw stimeObject:', stimObject, typeof stimObject);
-
-        const audioPath = stimObject.file || stimObject;
-        console.log('Audio path to use:', audioPath);
+        const audioPath = jsPsych.evaluateTimelineVariable('file');
+        console.log('on_load - Audio path:', audioPath);
         
-        // Create audio element dynamically
-        let trialAudio = null;
-        let audioPlayed = false;
-        let slider1Moved = false;
-        let slider2Moved = false;
-        let choiceSelected = false;
-        let miniRecordingCompleted = false;
-        let miniRecordingInProgress = false;
-        let miniTimerInterval = null;
+        trialDataStore = {
+          slider1Value: 4,
+          slider2Value: 4,
+          responseChoice: null,
+          otherText: ''
+        };
         
+        window.trialState = {
+          audioPlayed: false,
+          slider1Moved: false,
+          slider2Moved: false,
+          choiceSelected: false,
+          recordingCompleted: false
+        };
+        
+        let recordingInProgress = false;
+        let timerInterval = null;
+        
+        const submitBtn = document.querySelector('#jspsych-survey-html-form-next');
+        if (submitBtn) submitBtn.style.display = 'none';
+        
+        const audioElement = document.getElementById('trialAudio');
+        const playBtn = document.getElementById('playBtn');
         const audioStatus = document.getElementById('audioStatus');
-        const ratingsContainer = document.getElementById('ratingsContainer');
-        const audioIndicator = document.getElementById('audioPlayingIndicator');
-        const replayBtn = document.getElementById('replayBtn');
+        const recordingSection = document.getElementById('recordingSection');
+        const selectedResponseDiv = document.getElementById('selectedResponse');
+        const otherTextInput = document.getElementById('otherText');
         
-        // Function to play audio
-        const playAudioFile = async (isReplay = false) => {
-          console.log(isReplay ? 'Replaying audio' : 'Auto-playing audio on page load');
-          
-          // Create new audio element
-          if (trialAudio) {
-            trialAudio.pause();
-            trialAudio = null;
-          }
-          
-          trialAudio = new Audio(audioPath);
-          
-          console.log('Audio src:', trialAudio.src);
-          
-          // Show playing indicator
-          if (!isReplay) {
-            audioIndicator.style.display = 'block';
-            audioStatus.textContent = '';
-          } else {
-            audioStatus.textContent = '재생 중...';
-            audioStatus.style.color = '#1976d2';
-          }
-          
-          // Add event listeners
-          trialAudio.addEventListener('playing', () => {
-            console.log('Audio is playing');
-          });
-          
-          trialAudio.addEventListener('ended', () => {
-            console.log('Audio playback ended');
-            audioIndicator.style.display = 'none';
-            audioStatus.textContent = '';
-            replayBtn.style.display = 'inline-block';
-            
-            if (!audioPlayed) {
-              audioPlayed = true;
-              ratingsContainer.style.display = 'block';
-              checkSubmitReady();
-            }
-          });
-          
-          trialAudio.addEventListener('error', (e) => {
-            console.error('Audio error:', e);
-            console.error('Error code:', trialAudio.error?.code);
-            
-            audioIndicator.style.display = 'none';
-            
-            let errorMsg = '오디오 재생 실패: ';
-            switch(trialAudio.error?.code) {
-              case 1: errorMsg += '재생 중단됨'; break;
-              case 2: errorMsg += '네트워크 오류'; break;
-              case 3: errorMsg += '파일 디코딩 실패 (파일 형식 확인 필요)'; break;
-              case 4: errorMsg += '파일을 찾을 수 없음 (경로: ' + stimFile + ')'; break;
-              default: errorMsg += '알 수 없는 오류';
-            }
-            audioStatus.textContent = errorMsg;
-            audioStatus.style.color = '#dc3545';
-            
-            // Still show ratings to allow continuing
-            if (!audioPlayed) {
-              audioPlayed = true;
-              ratingsContainer.style.display = 'block';
-              replayBtn.style.display = 'inline-block';
-              checkSubmitReady();
-            }
-          });
-          
-          try {
-            console.log('Attempting to play audio...');
-            await trialAudio.play();
-            console.log('Audio play successful');
-          } catch (err) {
-            console.error('Play failed:', err);
-            audioIndicator.style.display = 'none';
-            audioStatus.textContent = '재생 실패: ' + err.message + ' (파일: ' + stimFile + ')';
-            audioStatus.style.color = '#dc3545';
-            
-            // Still show ratings to allow continuing
-            if (!audioPlayed) {
-              audioPlayed = true;
-              ratingsContainer.style.display = 'block';
-              replayBtn.style.display = 'inline-block';
-              checkSubmitReady();
-            }
-          }
+        const responseTexts = {
+          'choice1': '그만둬',
+          'choice2': '계속해',
+          'choice3': '그만해',
+          'choice4': '계속하세요'
         };
         
-        // AUTO-PLAY on page load
+        playBtn.addEventListener('click', () => {
+          playBtn.disabled = true;
+          audioStatus.textContent = '재생 중...';
+          audioStatus.style.color = '#667eea';
+          audioElement.play();
+        });
+        
+        audioElement.addEventListener('ended', () => {
+          audioStatus.textContent = '✅ 재생 완료';
+          audioStatus.style.color = '#28a745';
+          playBtn.disabled = false;
+          playBtn.textContent = '🔁 다시 듣기';
+          window.trialState.audioPlayed = true;
+          checkSubmitReady();
+        });
+        
+        audioElement.addEventListener('error', (e) => {
+          audioStatus.textContent = '❌ 재생 오류';
+          audioStatus.style.color = '#dc3545';
+          playBtn.disabled = false;
+          console.error('Audio error:', e);
+        });
+        
         setTimeout(() => {
-          playAudioFile(false);
-        }, 500); // Small delay to ensure page is fully loaded
+          const slider1 = document.getElementById('slider1');
+          const slider2 = document.getElementById('slider2');
+          const slider1Value = document.getElementById('slider1Value');
+          const slider2Value = document.getElementById('slider2Value');
+          
+          if (slider1) {
+            slider1.addEventListener('input', () => {
+              slider1Value.textContent = slider1.value;
+              trialDataStore.slider1Value = parseInt(slider1.value);
+              window.trialState.slider1Moved = true;
+              checkSubmitReady();
+            });
+          }
+          
+          if (slider2) {
+            slider2.addEventListener('input', () => {
+              slider2Value.textContent = slider2.value;
+              trialDataStore.slider2Value = parseInt(slider2.value);
+              window.trialState.slider2Moved = true;
+              checkSubmitReady();
+            });
+          }
+        }, 100);
         
-        // Replay button handler
-        replayBtn.onclick = () => {
-          playAudioFile(true);
-        };
+        const radioButtons = document.querySelectorAll('input[name="response_choice"]');
+        radioButtons.forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            window.trialState.choiceSelected = true;
+            trialDataStore.responseChoice = e.target.value;
+            recordingSection.classList.add('visible');
+            
+            const recordBtn = document.getElementById('recordBtn');
+            
+            if (e.target.id === 'choice5') {
+              otherTextInput.disabled = false;
+              selectedResponseDiv.textContent = '아래 입력란에 말할 내용을 입력하고 녹음해주세요';
+              recordBtn.disabled = otherTextInput.value.trim() === '';
+            } else {
+              otherTextInput.disabled = true;
+              otherTextInput.value = '';
+              trialDataStore.otherText = '';
+              selectedResponseDiv.textContent = `다음 내용을 말해주세요: ${responseTexts[e.target.id]}`;
+              recordBtn.disabled = false;
+            }
+            
+            if (submitBtn) submitBtn.style.display = 'none';
+            recordingSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            checkSubmitReady();
+          });
+        });
+        
+        otherTextInput.addEventListener('input', () => {
+          const recordBtn = document.getElementById('recordBtn');
+          const choice5 = document.getElementById('choice5');
+          trialDataStore.otherText = otherTextInput.value;
+          
+          if (choice5 && choice5.checked) {
+            recordBtn.disabled = otherTextInput.value.trim() === '';
+            if (otherTextInput.value.trim() !== '') {
+              selectedResponseDiv.textContent = `다음 내용을 말해주세요: "${otherTextInput.value}"`;
+            }
+          }
+        });
         
         function checkSubmitReady() {
-          const submitBtn = document.getElementById('submitBtn');
-          const choice5 = document.getElementById('choice5');
+          const submitBtn = document.querySelector('#jspsych-survey-html-form-next');
           
-          // If "직접 녹음하기" is selected, need recording to be completed
-          if (choice5.checked) {
-            if (audioPlayed && slider1Moved && slider2Moved && miniRecordingCompleted) {
+          console.log('Check submit ready:', window.trialState);
+          
+          if (window.trialState.audioPlayed && 
+              window.trialState.slider1Moved && 
+              window.trialState.slider2Moved && 
+              window.trialState.choiceSelected && 
+              window.trialState.recordingCompleted) {
+            if (submitBtn) {
               submitBtn.style.display = 'inline-block';
+              console.log('✅ Submit button enabled');
             }
           } else {
-            // For other choices, just need audio, sliders, and choice
-            if (audioPlayed && slider1Moved && slider2Moved && choiceSelected) {
-              submitBtn.style.display = 'inline-block';
+            if (submitBtn) {
+              submitBtn.style.display = 'none';
             }
           }
         }
         
-        const slider1 = document.getElementById('slider1');
-        const slider2 = document.getElementById('slider2');
+        const recordBtn = document.getElementById('recordBtn');
+        const stopBtn = document.getElementById('stopBtn');
         
-        slider1.addEventListener('input', () => {
-          slider1Moved = true;
-          checkSubmitReady();
-        });
-        
-        slider2.addEventListener('input', () => {
-          slider2Moved = true;
-          checkSubmitReady();
-        });
-        
-        // Radio button listeners
-        const radioButtons = document.querySelectorAll('input[name="response_choice"]');
-        radioButtons.forEach(radio => {
-          radio.addEventListener('change', (e) => {
-            choiceSelected = true;
-            const miniRecordBtn = document.getElementById('miniRecordBtn');
-            const miniStopBtn = document.getElementById('miniStopBtn');
-            const submitBtn = document.getElementById('submitBtn');
-            
-            // If "직접 녹음하기" is selected, enable recording
-            if (e.target.id === 'choice5') {
-              miniRecordBtn.disabled = false;
-              // Hide submit button until recording is done
-              submitBtn.style.display = 'none';
-            } else {
-              miniRecordBtn.disabled = true;
-              miniStopBtn.disabled = true;
-              checkSubmitReady();
-            }
-          });
-        });
-        
-        // Mini recording handlers
-        window.handleMiniRecord = async () => {
-          if (miniRecordingInProgress) return;
+        recordBtn.addEventListener('click', async () => {
+          if (recordingInProgress) return;
           
-          const miniRecordBtn = document.getElementById('miniRecordBtn');
-          const miniStopBtn = document.getElementById('miniStopBtn');
-          const miniStatus = document.getElementById('miniStatus');
+          const recordStatus = document.getElementById('recordStatus');
+          const recordTimer = document.getElementById('recordTimer');
           
           try {
             await startResponseRecording();
-            miniRecordingInProgress = true;
+            recordingInProgress = true;
             
-            miniRecordBtn.disabled = true;
-            miniStopBtn.disabled = false;
-            miniStatus.textContent = '🔴 녹음 중...';
-            miniStatus.style.color = '#dc3545';
+            recordBtn.disabled = true;
+            stopBtn.disabled = false;
+            recordStatus.textContent = '🔴 녹음 중...';
+            recordStatus.style.color = '#dc3545';
             
             let seconds = 0;
-            miniTimerInterval = setInterval(() => {
+            recordTimer.textContent = '0초';
+            timerInterval = setInterval(() => {
               seconds++;
-              const miniTimer = document.getElementById('miniTimer');
-              if (miniTimer) {
-                miniTimer.textContent = `${seconds}초`;
-              }
+              recordTimer.textContent = `${seconds}초`;
             }, 1000);
             
-            console.log('Mini recording started');
+            console.log('Recording started');
           } catch (err) {
-            console.error('Mini recording start error:', err);
+            console.error('Recording start error:', err);
             alert('녹음 시작 실패: ' + err.message);
           }
-        };
+        });
         
-        window.handleMiniStop = async () => {
-          if (!miniRecordingInProgress) return;
+        stopBtn.addEventListener('click', async () => {
+          if (!recordingInProgress) return;
           
-          const miniStopBtn = document.getElementById('miniStopBtn');
-          const miniStatus = document.getElementById('miniStatus');
+          const recordStatus = document.getElementById('recordStatus');
           
-          miniStopBtn.disabled = true;
-          miniStatus.textContent = '처리 중...';
-          miniStatus.style.color = '#666';
+          stopBtn.disabled = true;
+          recordStatus.textContent = '처리 중...';
+          recordStatus.style.color = '#666';
           
           try {
             await stopResponseRecording();
-            miniRecordingInProgress = false;
+            recordingInProgress = false;
             
-            if (miniTimerInterval) {
-              clearInterval(miniTimerInterval);
-              miniTimerInterval = null;
+            if (timerInterval) {
+              clearInterval(timerInterval);
+              timerInterval = null;
             }
             
-            console.log('Mini recording stopped, chunks:', responseRecordingChunks.length);
+            console.log('Recording stopped, chunks:', responseRecordingChunks.length);
             
             if (responseRecordingChunks.length > 0) {
-              miniStatus.textContent = '변환 중...';
+              recordStatus.textContent = '변환 중...';
               
               const webmBlob = new Blob(responseRecordingChunks, { type: 'audio/webm' });
               const wavBlob = await convertWebMToWav(webmBlob);
               
-              miniStatus.textContent = '업로드 중...';
+              recordStatus.textContent = '업로드 중...';
               
               const success = await uploadResponseRecording(wavBlob, audioPath, jsPsych.data.get().count());
               
               if (success) {
-                miniStatus.textContent = '✅ 녹음 완료!';
-                miniStatus.style.color = '#28a745';
-                miniRecordingCompleted = true;
+                recordStatus.textContent = '✅ 녹음 완료!';
+                recordStatus.style.color = '#28a745';
+                window.trialState.recordingCompleted = true;
                 checkSubmitReady();
               } else {
-                miniStatus.textContent = '⚠️ 업로드 실패';
-                miniStatus.style.color = '#ffc107';
-                miniRecordingCompleted = true; // Allow to proceed anyway
+                recordStatus.textContent = '⚠️ 업로드 실패 (계속 진행 가능)';
+                recordStatus.style.color = '#ffc107';
+                window.trialState.recordingCompleted = true;
                 checkSubmitReady();
               }
             } else {
-              miniStatus.textContent = '⚠️ 녹음 데이터 없음';
-              miniStatus.style.color = '#ffc107';
+              recordStatus.textContent = '⚠️ 녹음 데이터 없음';
+              recordStatus.style.color = '#ffc107';
             }
             
           } catch (err) {
-            console.error('Mini recording stop error:', err);
-            miniStatus.textContent = '❌ 오류: ' + err.message;
-            miniStatus.style.color = '#dc3545';
+            console.error('Recording stop error:', err);
+            recordStatus.textContent = '❌ 오류: ' + err.message;
+            recordStatus.style.color = '#dc3545';
           }
-        };
+        });
       },
       on_finish: (data) => {
-        const slider1 = document.getElementById('slider1');
-        const slider2 = document.getElementById('slider2');
-        const selectedChoice = document.querySelector('input[name="response_choice"]:checked');
-        
         data.task = 'rating';
-        data.stimulus = jsPsych.timelineVariable('file');
-        data.cuteness_rating = parseInt(slider1.value);
-        data.continue_conversation = parseInt(slider2.value);
-        data.response_choice = selectedChoice ? selectedChoice.value : 'none';
+        data.stimulus = jsPsych.evaluateTimelineVariable('file');
+        data.cuteness_rating = trialDataStore.slider1Value;
+        data.continue_conversation = trialDataStore.slider2Value;
+        data.response_choice = trialDataStore.responseChoice || 'none';
+        data.other_text = trialDataStore.otherText || '';
         data.trial_start_time = currentTrialStartTime;
         data.response_time = new Date().toISOString();
         data.user_agent = navigator.userAgent;
@@ -1160,7 +1217,8 @@
           stimulus: data.stimulus,
           cuteness_rating: data.cuteness_rating,
           continue_conversation: data.continue_conversation,
-          response_choice: data.response_choice
+          response_choice: data.response_choice,
+          other_text: data.other_text
         });
       }
     };
@@ -1205,6 +1263,7 @@
               cuteness_rating:     cleanData.cuteness_rating ?? '',
               continue_conversation: cleanData.continue_conversation ?? '',
               response_choice:    cleanData.response_choice || '',
+              other_text:         cleanData.other_text || '',
               time_elapsed:       cleanData.time_elapsed,
               trial_start_time:   cleanData.trial_start_time || '',
               response_time:      cleanData.response_time || '',
@@ -1213,8 +1272,7 @@
               birth_year:         demographics.birth_year || '',
               birth_month:        demographics.birth_month || '',
               native_lang:        demographics.native_lang || '',
-              dialect:            demographics.dialect || '',
-            
+              dialect:            demographics.dialect || ''
             };
           });
 
@@ -1238,6 +1296,7 @@
       jsPsych.run([
         preload,
         welcome,
+        consent,
         demographics,
         mic_permission,
         intro_page,
@@ -1250,7 +1309,3 @@
   </script>
 </body>
 </html>
-
-
-
-
