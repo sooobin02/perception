@@ -924,19 +924,19 @@
               <div style="text-align: left; max-width: 600px; margin: 20px auto;">
                 <label class="choice-option">
                   <input type="radio" name="response_choice" id="choice1" value="choice1" required>
-                  그만둬
+                  똑같은 말을 반복할 것이다.
                 </label>
                 <label class="choice-option">
                   <input type="radio" name="response_choice" id="choice2" value="choice2">
-                  계속해
+                  똑같이 반복하되, 천천히 말할 것이다.
                 </label>
                 <label class="choice-option">
                   <input type="radio" name="response_choice" id="choice3" value="choice3">
-                  그만해
+                  동일한 부탁을 다르게 말할 것이다.
                 </label>
                 <label class="choice-option">
                   <input type="radio" name="response_choice" id="choice4" value="choice4">
-                  계속하세요
+                  새로운 부탁을 할 것이다.
                 </label>
                 <label class="choice-option">
                   <input type="radio" name="response_choice" id="choice5" value="choice5">
@@ -1072,7 +1072,7 @@
               otherTextInput.disabled = true;
               otherTextInput.value = '';
               trialDataStore.otherText = '';
-              selectedResponseDiv.textContent = `다음 내용을 말해주세요: ${responseTexts[e.target.id]}`;
+              selectedResponseDiv.textContent = `답변을 직접 녹음해주세요.`;
               recordBtn.disabled = false;
             }
             
