@@ -1012,6 +1012,18 @@
           'choice5': '대화를 이어나가지 않을 것이다.'
         };
         
+        // Auto-play audio on page load
+        audioStatus.textContent = '🔊 음성 재생 중...';
+        audioStatus.style.color = '#667eea';
+        playBtn.disabled = true;
+        
+        audioElement.play().catch((err) => {
+          console.error('Auto-play error:', err);
+          audioStatus.textContent = '▶️ 버튼을 눌러 음성을 들어주세요';
+          audioStatus.style.color = '#666';
+          playBtn.disabled = false;
+        });
+        
         playBtn.addEventListener('click', () => {
           playBtn.disabled = true;
           audioStatus.textContent = '재생 중...';
@@ -1065,9 +1077,23 @@
           radio.addEventListener('change', (e) => {
             window.trialState.choiceSelected = true;
             trialDataStore.responseChoice = e.target.value;
-            recordingSection.classList.add('visible');
             
             const recordBtn = document.getElementById('recordBtn');
+            
+            // If choice5 is selected, skip recording section entirely
+            if (e.target.id === 'choice5') {
+              recordingSection.classList.remove('visible');
+              window.trialState.recordingCompleted = true; // Mark as completed to allow moving forward
+              otherTextInput.disabled = true;
+              otherTextInput.value = '';
+              trialDataStore.otherText = '';
+              checkSubmitReady();
+              return;
+            }
+            
+            // For all other choices, show recording section
+            recordingSection.classList.add('visible');
+            window.trialState.recordingCompleted = false; // Reset recording state
             
             if (e.target.id === 'choice6') {
               otherTextInput.disabled = false;
@@ -1314,5 +1340,3 @@
   </script>
 </body>
 </html>
-
-
