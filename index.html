@@ -1001,10 +1001,10 @@
         const otherTextInput = document.getElementById('otherText');
         
         const responseTexts = {
-          'choice1': '그만둬',
-          'choice2': '계속해',
-          'choice3': '그만해',
-          'choice4': '계속하세요'
+          'choice1': '똑같은 말을 반복할 것이다.',
+          'choice2': '똑같이 반복하되, 천천히 말할 것이다.',
+          'choice3': '동일한 부탁을 다르게 말할 것이다.',
+          'choice4': '새로운 부탁을 할 것이다.'
         };
         
         playBtn.addEventListener('click', () => {
@@ -1090,7 +1090,7 @@
           if (choice5 && choice5.checked) {
             recordBtn.disabled = otherTextInput.value.trim() === '';
             if (otherTextInput.value.trim() !== '') {
-              selectedResponseDiv.textContent = `다음 내용을 말해주세요: "${otherTextInput.value}"`;
+              selectedResponseDiv.textContent = `"${otherTextInput.value}"`;
             }
           }
         });
@@ -1309,3 +1309,4 @@
   </script>
 </body>
 </html>
+
