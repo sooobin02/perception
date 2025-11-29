@@ -940,6 +940,10 @@
                 </label>
                 <label class="choice-option">
                   <input type="radio" name="response_choice" id="choice5" value="choice5">
+                  대화를 이어나가지 않을 것이다.
+                </label>
+                <label class="choice-option">
+                  <input type="radio" name="response_choice" id="choice6" value="choice6">
                   기타 (직접 입력):
                 </label>
                 <input type="text" id="otherText" name="other_text" placeholder="여기에 입력하세요" 
@@ -1004,7 +1008,8 @@
           'choice1': '똑같은 말을 반복할 것이다.',
           'choice2': '똑같이 반복하되, 천천히 말할 것이다.',
           'choice3': '동일한 부탁을 다르게 말할 것이다.',
-          'choice4': '새로운 부탁을 할 것이다.'
+          'choice4': '새로운 부탁을 할 것이다.',
+          'choice5': '대화를 이어나가지 않을 것이다.'
         };
         
         playBtn.addEventListener('click', () => {
@@ -1064,7 +1069,7 @@
             
             const recordBtn = document.getElementById('recordBtn');
             
-            if (e.target.id === 'choice5') {
+            if (e.target.id === 'choice6') {
               otherTextInput.disabled = false;
               selectedResponseDiv.textContent = '아래 입력란에 말할 내용을 입력하고 녹음해주세요';
               recordBtn.disabled = otherTextInput.value.trim() === '';
@@ -1084,10 +1089,10 @@
         
         otherTextInput.addEventListener('input', () => {
           const recordBtn = document.getElementById('recordBtn');
-          const choice5 = document.getElementById('choice5');
+          const choice6 = document.getElementById('choice6');
           trialDataStore.otherText = otherTextInput.value;
           
-          if (choice5 && choice5.checked) {
+          if (choice6 && choice6.checked) {
             recordBtn.disabled = otherTextInput.value.trim() === '';
             if (otherTextInput.value.trim() !== '') {
               selectedResponseDiv.textContent = `"${otherTextInput.value}"`;
@@ -1309,4 +1314,5 @@
   </script>
 </body>
 </html>
+
 
